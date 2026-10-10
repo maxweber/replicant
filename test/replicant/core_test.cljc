@@ -479,6 +479,26 @@
                h/summarize)
            [[:insert-before [:li "Item #3"] [:li "Item #2"] :in "ul"]])))
 
+  (testing "Keeps the reconciled vdom of a node moved to the front"
+    ;; The node moves to the front and changes in the same render. The
+    ;; returned vdom must be the reconciled one, or the next render compares
+    ;; against stale data and skips the change.
+    (is (= (-> (h/render [:ul
+                          [:li {:replicant/key "0"} "Item #1"]
+                          [:li {:replicant/key "1"} "Item #2"]
+                          [:li {:replicant/key "2"} "Item #3"]])
+               (h/render [:ul
+                          [:li.working {:replicant/key "2"} "Item #3"]
+                          [:li {:replicant/key "0"} "Item #1"]
+                          [:li {:replicant/key "1"} "Item #2"]])
+               (h/render [:ul
+                          [:li {:replicant/key "2"} "Item #3"]
+                          [:li {:replicant/key "0"} "Item #1"]
+                          [:li {:replicant/key "1"} "Item #2"]])
+               h/get-mutation-log-events
+               h/summarize)
+           [[:remove-class [:li "Item #3"] "working"]])))
+
   (testing "Swaps second and next-to-last nodes"
     (is (= (-> (h/render [:ul
                           [:li {:replicant/key "0"} "Item #1"]
